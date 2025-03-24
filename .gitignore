@@ -1,0 +1,6 @@
+mlruns/
+custom_model_artifacts/
+MyFirstMLflow_artifact_loc/
+hyperopt_mlflow_artifacts/
+.vscode/
+.__pycache__/

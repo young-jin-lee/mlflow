@@ -1,0 +1,23 @@
+artifact_path: model
+flavors:
+  python_function:
+    cloudpickle_version: 3.1.1
+    code: null
+    env:
+      conda: conda.yaml
+      virtualenv: python_env.yaml
+    loader_module: mlflow.pyfunc.model
+    python_model: python_model.pkl
+    python_version: 3.10.16
+    streamable: false
+is_signature_from_type_hint: true
+mlflow_version: 2.20.3
+model_size_bytes: 3574
+model_uuid: 6284c24c911f485c9d26378497d1e175
+run_id: a5e5ef60f90a43598fca0763e6a8339f
+signature:
+  inputs: '[{"type": "map", "values": {"type": "any"}, "required": true}]'
+  outputs: '[{"type": "long", "required": true}]'
+  params: null
+type_hint_from_example: false
+utc_time_created: '2025-03-04 05:57:44.621320'

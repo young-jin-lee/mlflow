@@ -22,3 +22,18 @@ def get_train_val_test_set(df: pd.DataFrame) -> Tuple:
     )
 
     return X_train, X_val, X_test, y_train, y_val, y_test
+
+
+def get_train_val_set(df: pd.DataFrame) -> Tuple:
+    """
+    Get training and testing sets.
+
+    :param df: Dataframe.
+    :return: Train, validation and test dataframes.
+    """
+
+    X_train, X_val, y_train, y_val = train_test_split(
+        df.drop("target", axis=1), df["target"], test_size=0.3, random_state=42
+    )
+
+    return X_train, X_val, y_train, y_val

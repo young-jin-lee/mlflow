@@ -8,7 +8,7 @@ from typing import List
 
 
 def get_pipeline(
-    numerical_features: List[str], categorical_features: List[str]
+    numerical_features: List[str], categorical_features: List[str] = []
     ) -> Pipeline:
     """
     Get sklearn pipeline.
@@ -20,9 +20,10 @@ def get_pipeline(
 
     preprocessing = ColumnTransformer(
         transformers = [
-            ("numerical_imputer", 
-             SimpleImputer(strategy="median"), 
-             numerical_features), # Deal with NA values
+            (
+                "numerical_imputer", 
+                SimpleImputer(strategy="median"), 
+                numerical_features), # Deal with NA values
             (
                 "one_hot_encoder",
                 OneHotEncoder(handle_unknown="ignore"),

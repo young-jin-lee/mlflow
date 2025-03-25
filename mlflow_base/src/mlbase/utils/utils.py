@@ -13,7 +13,7 @@ from sklearn.metrics import recall_score
 from sklearn.metrics import f1_score
 from sklearn.metrics import roc_auc_score
 
-from mlbase.ml_training.model_pipeline import get_model_pipeline
+from mlbase.ml_training.model_pipeline import get_pipeline
 
 
 def set_or_create_experiment(experiment_name: str) -> str:
@@ -82,44 +82,36 @@ def get_classification_metrics(
 
     return metrics
 
-def register_model_with_client(model_name: str, run_id: str, artifact_path: str):
-    """
-    Register a model.
-
-    :param model_name: Name of the model.
-    :param run_id: Run ID.  
-    :param artifact_path: Artifact path.
-
-    :return: None.
-    """
-    client = mlflow.tracking.MlflowClient()
-    client.create_registered_model(model_name)
-    client.create_model_version(name=model_name, source=f"runs:/{run_id}/{artifact_path}")
-
 def objective_function(
         params: Dict, 
         X_train:pd.DataFrame, 
-        X_test: pd.DataFrame, 
+        X_val: pd.DataFrame, 
         y_train:pd.DataFrame, 
-        y_test:pd.DataFrame, 
+        y_val:pd.DataFrame, 
         numerical_features: List[str], 
         categorical_features: List[str],
-        experiment_id) -> float:
+        experiment_id,
+        trials_object) -> float:
 
-    pipeline = get_model_pipeline(numerical_features=numerical_features)
+    run_index = len(trials_object.trials)
+    run_name = f"trial_{run_index}"
+
+    pipeline = get_pipeline(numerical_features=numerical_features)
     params.update({"model__max_depth": int(params["model__max_depth"])})
     params.update({"model__n_estimators": int(params["model__n_estimators"])})
     pipeline.set_params(**params)
 
-    with mlflow.start_run(experiment_id=experiment_id, nested=True) as run: # runs in optimization process are always child runs 
+    with mlflow.start_run(experiment_id=experiment_id, nested=True, run_name=run_name) as run: # runs in optimization process are always child runs 
         pipeline.fit(X_train, y_train)
-        y_pred = pipeline.predict(X_test)
+        y_pred = pipeline.predict(X_val)
         metrics = get_classification_metrics(
-            y_true=y_test, y_pred=y_pred, prefix="test"
+            y_true=y_val, y_pred=y_pred, prefix="val"
         )
 
         mlflow.log_params(pipeline["model"].get_params())
         mlflow.log_metrics(metrics)
         mlflow.sklearn.log_model(pipeline, f"{run.info.run_id}-model")
 
-    return -metrics["test_f1"]
+        print("Optimization in Progress - ", f"Run Name: {run_name}", " ", "Hyperparams: ", params)
+
+    return -metrics["val_f1"]

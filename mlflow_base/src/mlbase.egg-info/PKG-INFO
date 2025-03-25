@@ -2,6 +2,7 @@ Metadata-Version: 2.4
 Name: mlbase
 Version: 0.1.0
 Summary: A reusable ML project base
+Author: David Lee
 Author-email: David Lee <youngenie9@gmail.com>
 Description-Content-Type: text/markdown
 Requires-Dist: numpy

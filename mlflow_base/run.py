@@ -2,7 +2,7 @@ from functools import partial
 import mlflow
 from mlbase.utils.utils import objective_function
 from mlbase.feature.data_processing import get_feature_dataframe
-from mlbase.ml_training.retrieval import get_split_set, get_train_val_set, get_train_val_test_set
+from mlbase.ml_training.retrieval import get_train_val_test_set
 from mlbase.ml_training.train import train_model
 from mlbase.ml_training.model_pipeline import get_pipeline
 from mlbase.utils.utils import set_or_create_experiment
@@ -33,7 +33,7 @@ if __name__=="__main__":
     df = get_feature_dataframe()
 
     # Preprocess
-    X_train, X_val, X_test, y_train, y_val, y_test = get_split_set(use_test_set, df)
+    X_train, X_val, X_test, y_train, y_val, y_test = get_train_val_test_set(df)
     numerical_features = [feature for feature in X_train.columns if feature not in ["id", "target", "MedHouseVal"]]
     
     # hyper-param tuning
@@ -42,7 +42,7 @@ if __name__=="__main__":
         "model__max_depth": hp.quniform("model__max_depth", 10, 15, 20),
     }
 
-    with mlflow.start_run(experiment_id = experiment_id, run_name="hyperparameter_optimization") as run:
+    with mlflow.start_run(experiment_id = experiment_id, run_name="opt_hyperparam") as run:
         trials = Trials()
         best_params = fmin(
             fn = partial( # partial when you want more parameters than default fn.
@@ -68,37 +68,56 @@ if __name__=="__main__":
     pipeline = get_pipeline(numerical_features=numerical_features, categorical_features=[])
     pipeline.set_params(**best_params)
 
+
+    X_all = pd.concat([X_train, X_val])
+    y_all = pd.concat([y_train, y_val])
+
+    # Cross-validation
     cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+    with mlflow.start_run(run_name="cross_validation", experiment_id=experiment_id) as cv_run:
+        cv_scores = cross_val_score(
+            estimator=pipeline,
+            X=X_all[numerical_features],
+            y=y_all,
+            cv=cv,
+            scoring="f1",
+            n_jobs=-1
+        )
 
-    scores = cross_val_score(
-        estimator=pipeline,
-        X=X_train[numerical_features],  # Or just X_full if you're using full features
-        y=y_train,
-        cv=cv,
-        scoring="f1",  # or "accuracy", "roc_auc", etc.
-        n_jobs=-1  # Use all cores
-    )
+        mean_f1 = np.mean(cv_scores)
+        std_f1 = np.std(cv_scores)
 
-    print("Cross-Validation F1 scores:", scores)
-    print("Average F1:", np.mean(scores))
+        # Log metrics
+        mlflow.log_metric("cv_f1_mean", mean_f1)
+        mlflow.log_metric("cv_f1_std", std_f1)
+
+        # Log all individual scores too
+        for i, score in enumerate(cv_scores):
+            mlflow.log_metric(f"cv_f1_fold_{i+1}", score)
+
+        # Optional: log a tag
+        mlflow.set_tag("cv_info", "StratifiedKFold, 5 splits, f1 macro")
+
+        # Save run_id to link with next steps
+        cv_run_id = cv_run.info.run_id
 
     run_id, trained_pipeline, model = train_model(
         pipeline=pipeline,
-        run_name="register_best_model",
+        run_name="register_model",
         model_name=model_name,
         artifact_path=f"{run.info.run_id}-best-model",
-        x=X_train,
-        y=y_train,
+        x=X_all,
+        y=y_all,
     )
 
-    # Make prediction on validation set
-    y_pred = pipeline.predict(X_val[numerical_features])
+    # Make prediction on test set
+    y_pred = pipeline.predict(X_test[numerical_features])
 
-    # Evaluate on validation set
+    # Evaluate on test set
     metrics = get_classification_metrics(
-        y_true=y_val, y_pred=y_pred, prefix="best_model_val"
+        y_true=y_test, y_pred=y_pred, prefix="best_model_test"
     )
-    performance_plots = get_performance_plots(y_true=y_val, y_pred=y_pred, prefix="val")
+    performance_plots = get_performance_plots(y_true=y_test, y_pred=y_pred, prefix="test")
 
     # Log performance metrics and plots 
     mlflow.start_run(run_id=run_id)

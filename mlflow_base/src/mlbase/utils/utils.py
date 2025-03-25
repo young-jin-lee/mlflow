@@ -13,7 +13,7 @@ from sklearn.metrics import recall_score
 from sklearn.metrics import f1_score
 from sklearn.metrics import roc_auc_score
 
-from package.ml_training.model_pipeline import get_model_pipeline
+from mlbase.ml_training.model_pipeline import get_model_pipeline
 
 
 def set_or_create_experiment(experiment_name: str) -> str:

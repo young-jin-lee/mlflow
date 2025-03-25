@@ -1,13 +1,13 @@
 from functools import partial
 import mlflow
-from package.utils.utils import objective_function
-from package.feature.data_processing import get_feature_dataframe
-from package.ml_training.retrieval import get_train_val_test_set
-from package.ml_training.train import train_model
-from package.ml_training.model_pipeline import get_pipeline
-from package.utils.utils import set_or_create_experiment
-from package.utils.utils import get_classification_metrics
-from package.utils.utils import get_performance_plots
+from mlbase.utils.utils import objective_function
+from mlbase.feature.data_processing import get_feature_dataframe
+from mlbase.ml_training.retrieval import get_train_val_test_set
+from mlbase.ml_training.train import train_model
+from mlbase.ml_training.model_pipeline import get_pipeline
+from mlbase.utils.utils import set_or_create_experiment
+from mlbase.utils.utils import get_classification_metrics
+from mlbase.utils.utils import get_performance_plots
 
 from hyperopt import fmin 
 from hyperopt import tpe 
@@ -85,4 +85,3 @@ if __name__=="__main__":
         mlflow.set_tag("mlflow.note.content", "This is a binary classifier for the house pricing dataset.")
         for plot_name, fig in performance_plots.items():
             mlflow.log_figure(fig, artifact_file=f"{plot_name}.png")
-    

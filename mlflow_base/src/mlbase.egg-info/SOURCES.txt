@@ -7,9 +7,11 @@ src/mlbase.egg-info/SOURCES.txt
 src/mlbase.egg-info/dependency_links.txt
 src/mlbase.egg-info/requires.txt
 src/mlbase.egg-info/top_level.txt
+src/mlbase/config/config.py
 src/mlbase/feature/__init__.py
 src/mlbase/feature/data_processing.py
 src/mlbase/ml_training/__init__.py
+src/mlbase/ml_training/evaluation.py
 src/mlbase/ml_training/model_pipeline.py
 src/mlbase/ml_training/retrieval.py
 src/mlbase/ml_training/train.py

@@ -20,6 +20,27 @@ def get_feature_dataframe() -> pd.DataFrame:
 
     return df
 
-# def print_text_from_feature(text:str):
-#     print(text)
+def get_feature_types(df, excluded_cols=None):
+    """
+    Splits features into numerical and categorical based on dtypes.
 
+    :param df: Input DataFrame
+    :param excluded_cols: List of columns to exclude from both types
+    :return: numerical_features, categorical_features
+    """
+    if excluded_cols is None:
+        excluded_cols = []
+
+    numerical_features = (
+        df.select_dtypes(include=["int64", "float64"])
+        .columns.difference(excluded_cols)
+        .tolist()
+    )
+
+    categorical_features = (
+        df.select_dtypes(include=["object", "category"])
+        .columns.difference(excluded_cols)
+        .tolist()
+    )
+
+    return numerical_features, categorical_features

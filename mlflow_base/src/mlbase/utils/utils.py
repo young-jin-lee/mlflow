@@ -115,3 +115,20 @@ def objective_function(
         print("Optimization in Progress - ", f"Run Name: {run_name}", " ", "Hyperparams: ", params)
 
     return -metrics["val_f1"]
+
+def log_cv_metrics(scores, cv, mean_f1, std_f1):
+    # Log metrics
+    mlflow.log_metric("cv_f1_mean", mean_f1)
+    mlflow.log_metric("cv_f1_std", std_f1)
+
+    # Log all individual scores too
+    for i, score in enumerate(scores):
+        mlflow.log_metric(f"cv_f1_fold_{i+1}", score)
+
+    # Optional: log a tag
+    mlflow.set_tag("cv_info", "StratifiedKFold, 5 splits, f1 macro")
+    mlflow.set_tag("stage", "cv")
+
+    mlflow.log_param("cv_n_splits", 5)
+    mlflow.log_param("cv_shuffle", True)
+    mlflow.log_param("cv_random_state", 42)
